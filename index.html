@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Modern Credit Card Validator</title>
+        <link
+            href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+            rel="stylesheet"
+        />
+        <style>
+            .perspective-1000 {
+                perspective: 1000px;
+            }
+            .card-background {
+                background: linear-gradient(45deg, #242424, #3a3a3a);
+            }
+            .glass-effect {
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+            }
+            input::placeholder {
+                color: #9ca3af;
+            }
+            /* Override Tailwind's text-opacity to ensure text is visible */
+            .text-white {
+                color: #ffffff !important;
+            }
+        </style>
+    </head>
+    <body
+        class="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen flex items-center justify-center p-4"
+    >
+        <div class="max-w-md w-full space-y-8">
+            <!-- Credit Card Display -->
+            <div
+                class="relative h-56 w-full card-background rounded-xl shadow-2xl overflow-hidden perspective-1000"
+            >
+                <div
+                    class="absolute inset-0 bg-gradient-to-r from-purple-400/30 to-blue-500/30 glass-effect"
+                ></div>
+
+                <!-- Card Chip -->
+                <div class="absolute top-8 left-8">
+                    <div
+                        class="w-12 h-10 bg-gradient-to-br from-yellow-200 to-yellow-400 rounded-md flex items-center justify-center overflow-hidden"
+                    >
+                        <div class="w-full h-full grid grid-cols-3 gap-1 p-1">
+                            <div class="bg-yellow-600"></div>
+                            <div class="bg-yellow-600"></div>
+                            <div class="bg-yellow-600"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Logo -->
+                <div
+                    id="cardLogo"
+                    class="absolute top-8 right-8 w-12 h-8 flex items-center justify-center"
+                >
+                    <!-- Card logo will be inserted here -->
+                </div>
+
+                <!-- Card Number -->
+                <div class="absolute top-28 left-8 right-8">
+                    <div
+                        class="text-2xl text-white font-mono tracking-wider"
+                        id="cardNumberDisplay"
+                    >
+                        •••• •••• •••• ••••
+                    </div>
+                </div>
+
+                <!-- Card Details -->
+                <div
+                    class="absolute bottom-8 left-8 right-8 flex justify-between items-end"
+                >
+                    <div class="text-white space-y-1">
+                        <div class="text-xs text-gray-300">Card Holder</div>
+                        <div class="font-medium tracking-wider">
+                            CARD HOLDER
+                        </div>
+                    </div>
+                    <div class="text-white space-y-1">
+                        <div class="text-xs text-gray-300">Valid Thru</div>
+                        <div class="font-medium">••/••</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Form -->
+            <div
+                class="glass-effect rounded-xl p-8 space-y-6 border border-gray-700"
+            >
+                <div>
+                    <label
+                        class="block text-sm font-medium text-gray-200 mb-2"
+                        for="ccNumber"
+                    >
+                        Card Number
+                    </label>
+                    <input
+                        type="text"
+                        id="ccNumber"
+                        class="w-full px-4 py-3 bg-white rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        placeholder="Enter your card number"
+                        maxlength="19"
+                    />
+                </div>
+
+                <div id="validationResult" class="text-center hidden">
+                    <!-- Validation result will be shown here -->
+                </div>
+
+                <button
+                    onclick="validateCard()"
+                    class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium py-3 px-4 rounded-lg hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-200"
+                >
+                    Validate Card
+                </button>
+            </div>
+        </div>
+
+        <script>
+            // Card patterns for identification
+            const cardPatterns = {
+                visa: {
+                    pattern: /^4[0-9]{12}(?:[0-9]{3})?$/,
+                    logo: `<svg class="w-12 h-8" viewBox="0 0 48 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17.0457 8.95969L12.6895 23.3818H8.05598L5.42975 11.3251C5.27835 10.7015 5.14975 10.4558 4.69639 10.1677C3.90404 9.68211 2.53246 9.22601 1.33337 8.93501L1.42246 8.95984H8.39838C9.22445 8.95984 9.96975 9.51655 10.1378 10.4558L11.4986 18.9677L14.2614 8.95984H17.0457V8.95969ZM35.373 17.9169C35.3907 14.4988 31.1614 14.2909 31.2001 12.842C31.2141 12.3677 31.6684 11.8626 32.6601 11.7366C33.1766 11.6725 34.5852 11.6273 36.1873 12.2602L36.8684 9.34155C36.0051 9.03697 34.9016 8.74487 33.5459 8.74487C30.0193 8.74487 27.5239 10.6115 27.4827 13.2602C27.4379 15.2386 29.2387 16.3351 30.5934 16.9715C31.9925 17.6273 32.4273 18.0457 32.4193 18.6344C32.407 19.5273 31.3502 19.9169 30.3643 19.9344C28.6273 19.9646 27.6387 19.4251 26.8457 19.0076L26.1432 22.0251C26.9395 22.4397 28.4325 22.8011 29.9925 22.8183C33.7291 22.8183 36.1873 20.9744 36.2073 18.1876L35.373 17.9169ZM46.2141 23.3818H42.9519L40.4193 8.95984H43.7432L46.2738 23.3818H46.2141ZM26.4827 8.95984L23.5284 23.3818H20.3073L23.2598 8.95984H26.4827Z" fill="white"/>
+                      </svg>`,
+                },
+                mastercard: {
+                    pattern: /^5[1-5][0-9]{14}$/,
+                    logo: `<svg class="w-12 h-8" viewBox="0 0 48 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="18" cy="12" r="8" fill="#EB001B"/>
+                        <circle cx="30" cy="12" r="8" fill="#F79E1B" fill-opacity="0.8"/>
+                      </svg>`,
+                },
+                amex: {
+                    pattern: /^3[47][0-9]{13}$/,
+                    logo: `<svg class="w-12 h-8" viewBox="0 0 48 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="48" height="24" rx="4" fill="#006FCF"/>
+                        <path d="M24 7L30 12L24 17H18L24 12L18 7H24Z" fill="white"/>
+                      </svg>`,
+                },
+                discover: {
+                    pattern: /^6(?:011|5[0-9]{2})[0-9]{12}$/,
+                    logo: `<svg class="w-12 h-8" viewBox="0 0 48 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="48" height="24" rx="4" fill="#FF6B00"/>
+                        <path d="M14 12C14 9.23858 16.2386 7 19 7C21.7614 7 24 9.23858 24 12C24 14.7614 21.7614 17 19 17C16.2386 17 14 14.7614 14 12Z" fill="white"/>
+                      </svg>`,
+                },
+            };
+
+            // Format card number as user types
+            document
+                .getElementById("ccNumber")
+                .addEventListener("input", function (e) {
+                    let value = e.target.value.replace(/\D/g, "");
+                    let formattedValue = "";
+
+                    for (let i = 0; i < value.length; i++) {
+                        if (i > 0 && i % 4 === 0) {
+                            formattedValue += " ";
+                        }
+                        formattedValue += value[i];
+                    }
+
+                    e.target.value = formattedValue;
+
+                    // Update card display
+                    const displayValue =
+                        formattedValue || "•••• •••• •••• ••••";
+                    document.getElementById("cardNumberDisplay").textContent =
+                        displayValue;
+
+                    // Check card type as user types
+                    detectCardType(value);
+                });
+
+            function detectCardType(number) {
+                const cardLogo = document.getElementById("cardLogo");
+                cardLogo.innerHTML = "";
+
+                for (const [type, data] of Object.entries(cardPatterns)) {
+                    if (data.pattern.test(number)) {
+                        cardLogo.innerHTML = data.logo;
+                        return type;
+                    }
+                }
+                return null;
+            }
+
+            function luhnCheck(number) {
+                const digits = number.replace(/\D/g, "");
+                let sum = 0;
+                let isEven = false;
+
+                for (let i = digits.length - 1; i >= 0; i--) {
+                    let digit = parseInt(digits[i]);
+
+                    if (isEven) {
+                        digit *= 2;
+                        if (digit > 9) {
+                            digit -= 9;
+                        }
+                    }
+
+                    sum += digit;
+                    isEven = !isEven;
+                }
+
+                return sum % 10 === 0;
+            }
+
+            function validateCard() {
+                const number = document
+                    .getElementById("ccNumber")
+                    .value.replace(/\D/g, "");
+                const resultDiv = document.getElementById("validationResult");
+                resultDiv.classList.remove("hidden");
+
+                if (number.length < 13) {
+                    resultDiv.innerHTML = `
+                    <div class="text-red-400">
+                        Card number is too short
+                    </div>
+                `;
+                    return;
+                }
+
+                const cardType = detectCardType(number);
+                const isValid = luhnCheck(number);
+
+                if (isValid && cardType) {
+                    resultDiv.innerHTML = `
+                    <div class="text-green-400">
+                        Valid ${cardType.charAt(0).toUpperCase() + cardType.slice(1)} card number
+                    </div>
+                `;
+                } else if (!cardType) {
+                    resultDiv.innerHTML = `
+                    <div class="text-red-400">
+                        Invalid or unsupported card type
+                    </div>
+                `;
+                } else {
+                    resultDiv.innerHTML = `
+                    <div class="text-red-400">
+                        Invalid card number
+                    </div>
+                `;
+                }
+            }
+        </script>
+    </body>
+</html>
